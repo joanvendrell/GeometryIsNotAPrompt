@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Geometry Is Not a Prompt</title>
+  <meta name="description" content="Mechanism allocation for physical-world agents: decide, sub-task by sub-task, what an LLM should infer and what a tool should compute. PhysWorldAI Workshop, NeurIPS 2026.">
+  <meta property="og:title" content="Geometry Is Not a Prompt">
+  <meta property="og:description" content="What physical-world agents should compute instead of infer. PhysWorldAI @ NeurIPS 2026.">
+  <meta property="og:image" content="static/videos/poster_delegation.jpg">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='3' y='9' width='11' height='14' rx='3' fill='%237451a6'/><rect x='18' y='9' width='11' height='14' rx='3' fill='%23168c88'/><path d='M14 16h4' stroke='%231b2333' stroke-width='2.5'/></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="3" y="9" width="11" height="14" rx="3" fill="#7451a6"/><rect x="18" y="9" width="11" height="14" rx="3" fill="#168c88"/><path d="M14 16h4" stroke="currentColor" stroke-width="2.5"/></svg>
+      Geometry ≠ Prompt
+    </a>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#delegation">Delegation</a></li>
+      <li><a href="#try">Try it</a></li>
+      <li><a href="#cases">Cases</a></li>
+      <li><a href="#results">Results</a></li>
+      <li><a href="#theory">Theory</a></li>
+      <li><a href="#citation">Citation</a></li>
+    </ul>
+    <button class="theme-btn" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ============================================================ HERO -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <h1>Geometry Is <span>Not</span> a Prompt</h1>
+    <p class="subtitle">What Physical-World Agents Should Compute Instead of Infer</p>
+    <div class="badges">
+      <span class="badge">PhysWorldAI · NeurIPS 2026 Workshop</span>
+      <span class="badge alt">Atlanta, GA · December 13, 2026</span>
+    </div>
+    <p class="tagline">An agent should not re-derive camera geometry inside a prompt. We make the split between
+      <span class="llm-t">LLM inference</span> and <span class="tool-t">tool computation</span> a measurable design decision,
+      taken sub-task by sub-task, and test it on real industrial imagery.</p>
+    <div class="authors">
+      <a>Joan Vendrell Gallart</a><sup>1,2</sup>, &nbsp;
+      <a>Elaheh Vaezpour</a><sup>1</sup>, &nbsp;
+      <a>Behnam Moradi</a><sup>1</sup>, &nbsp;
+      <a>Tara Javidi</a><sup>1,3</sup>
+    </div>
+    <div class="affil"><sup>1</sup>KavAI &nbsp;·&nbsp; <sup>2</sup>University of California, Irvine &nbsp;·&nbsp; <sup>3</sup>University of California, San Diego</div>
+    <div class="buttons">
+      <a class="btn" href="static/pdf/geometry_is_not_a_prompt.pdf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Paper (PDF)</a>
+      <a class="btn" href="https://physworld-org.github.io/physworld.github.io/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>Workshop</a>
+      <a class="btn ghost" href="#project-video">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Video</a>
+      <a class="btn ghost" href="#try">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Interactive</a>
+      <a class="btn ghost" href="#citation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 7h4v4H7zM7 11c0 3-1 5-3 6M15 7h4v4h-4zM15 11c0 3-1 5-3 6"/></svg>BibTeX</a>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================ PROJECT VIDEO -->
+<section id="project-video" class="soft">
+  <div class="wrap">
+    <div class="eyebrow">Project video</div>
+    <h2>The paper in two minutes</h2>
+    <p class="lead">An animated walkthrough: the grounding failure, the delegation loop, why visibility is a projection,
+      the delegated retrieval pipeline, the LLM as tool maker, and the held-out results.</p>
+    <div class="video-frame">
+      <video id="walkthrough" controls muted playsinline preload="metadata" poster="static/videos/poster_walkthrough.jpg">
+        <source src="static/videos/walkthrough.mp4" type="video/mp4">
+      </video>
+    </div>
+    <div class="chapters">
+      <button data-t="0">Intro</button>
+      <button data-t="3.5">1 · The failure</button>
+      <button data-t="19.5">2 · Delegation loop</button>
+      <button data-t="58.5">3 · Geometry</button>
+      <button data-t="76.4">4 · Retrieval</button>
+      <button data-t="96.1">5 · Tool maker</button>
+      <button data-t="111.7">6 · Results</button>
+    </div>
+    <p class="video-note">Animated walkthrough (about 2 minutes, no audio). Numbers come from the paper's tables; camera poses in the retrieval segment are synthetic.</p>
+  </div>
+</section>
+
+<!-- ============================================================ OVERVIEW -->
+<section id="overview">
+  <div class="wrap">
+    <div class="eyebrow">Overview</div>
+    <h2>Infer what is linguistic. Compute what is physical.</h2>
+    <p class="lead">An operator at an industrial site asks for images of one asset: from a given side, at close range,
+      or from several viewpoints. The request is simple for a person. For an agent, part of it is language and part
+      of it is camera geometry.</p>
+
+    <div class="grid g3" style="margin-bottom:28px">
+      <div class="photo"><img src="static/images/web/drone_mavic2.jpg" alt="A quadcopter drone in flight against a blue sky" loading="lazy">
+        <span class="credit">Photo: Iswoar, <a href="https://commons.wikimedia.org/wiki/File:A_drone_DJI_Mavic_2_Pro_flying.jpg">CC BY-SA 4.0</a></span></div>
+      <div class="photo"><img src="static/images/paper/caseA_fov_tool.jpg" alt="Drone frame of an industrial site with asset AB230 marked by a crosshair" loading="lazy">
+        <span class="credit">Survey frame with projected asset (paper)</span></div>
+      <div class="photo"><img src="static/images/web/industrial_piping.jpg" alt="Dense industrial process piping and platforms" loading="lazy">
+        <span class="credit">Photo: Bitjungle, <a href="https://commons.wikimedia.org/wiki/File:INdustrial_piping.jpg">CC BY-SA 3.0</a></span></div>
+    </div>
+
+    <div class="versus">
+      <div class="side llm">
+        <h3><span class="chip llm">LLM</span>&nbsp; keep it where language matters</h3>
+        <ul>
+          <li>Parsing “show me AB230 from the north, not thermal” and its paraphrases</li>
+          <li>Open-ended, request-time selection criteria</li>
+          <li>Appearance properties: occlusion, blur</li>
+        </ul>
+      </div>
+      <div class="side tool">
+        <h3><span class="chip tool">TOOL</span>&nbsp; delegate what physics fixes</h3>
+        <ul>
+          <li>Bulk retrieval of frames and their camera pose</li>
+          <li>Visibility: is the asset inside this camera's field of view?</li>
+          <li>Diverse viewpoint selection among the valid frames</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout"><b>Mechanism allocation.</b> Tools alone do not tell you which steps to hand them. We decompose a task into
+      sequential sub-tasks and assign each one to the LLM or to a specialized tool, using its measured error, latency, cost and flexibility.
+      The point is not to replace the LLM, but to keep it for what needs language understanding.</div>
+  </div>
+</section>
+
+<!-- ============================================================ ABSTRACT -->
+<section class="soft">
+  <div class="wrap">
+    <div class="paperthumb">
+      <a href="static/pdf/geometry_is_not_a_prompt.pdf"><img src="static/images/paper/page1.jpg" alt="First page of the paper" loading="lazy"></a>
+      <div>
+        <div class="eyebrow">Abstract</div>
+        <p style="color:var(--ink-2)">Physical-world agents often combine two different kinds of reasoning: interpreting flexible language and
+          computing quantities determined by the physical world. Treating both as prompting problems can be unreliable, particularly when
+          correctness depends on camera pose, field of view or geometric projection. We formulate <em>mechanism allocation</em>: a task is
+          divided into sequential sub-tasks, and each is assigned either to an LLM or to a specialized tool based on its expected error, latency,
+          cost, and flexibility. We use these quantities to compare complete agent designs and study how errors in their estimation affect the
+          selected allocation. We apply the framework to asset-aware retrieval of images in real industrial applications, where an agent aims to
+          retrieve images containing a given asset under distinct requirements. The study compares direct prompting, prompts augmented with
+          equations, model-generated code, and deterministic geometric tools. The aim is not to replace the LLM, but to retain it for decisions
+          requiring language understanding while computing explicitly what is best computed rather than inferred.</p>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><b>0.982</b><span>strict precision of the selected allocation on 24 held-out assets</span></div>
+      <div class="stat"><b>68×</b><span>fewer tokens than direct prompting (17× fewer than code generation)</span></div>
+      <div class="stat"><b>0.653</b><span>precision when the LLM is handed the exact projection equations</span></div>
+      <div class="stat"><b>~31k</b><span>geo-located frames with camera pose, 109 catalogued assets</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ PROBLEM / CASE A -->
+<section id="problem">
+  <div class="wrap">
+    <div class="eyebrow">The failure</div>
+    <h2>Confident, plausible, and wrong</h2>
+    <p class="lead">A single multimodal call to <code>gemini-3.7-flash</code>, prompted “<em>Highlight the vessel AB230</em>”. When the stencilled
+      tag is legible, the box is right. When the same asset is seen obliquely with its tag cropped, the model still answers <code>found=true</code>,
+      and boxes the wrong object.</p>
+    <div class="grid g4">
+      <figure class="paper"><img src="static/images/paper/caseA_correct.jpg" alt="Correct bounding box on vessel AB230 with legible tag" loading="lazy">
+        <figcaption><b>(a)</b> Tag legible: correct box.</figcaption></figure>
+      <figure class="paper"><img src="static/images/paper/caseA_wrong.jpg" alt="LLM box on the wrong element in an oblique view" loading="lazy">
+        <figcaption><b>(b)</b> LLM confident, but wrong.</figcaption></figure>
+      <figure class="paper"><img src="static/images/paper/caseA_groundtruth.jpg" alt="Same frame with the true AB230 outlined in green at the right edge" loading="lazy">
+        <figcaption><b>(b′)</b> Ground truth: the cropped vessel at the right edge.</figcaption></figure>
+      <figure class="paper"><img src="static/images/paper/caseA_fov_tool.jpg" alt="FOV tool output with a crosshair on AB230" loading="lazy">
+        <figcaption><b>(c)</b> FOV tool: geometric inclusion, or ∅.</figcaption></figure>
+    </div>
+    <div class="callout"><b>Why the model cannot fix this by looking harder.</b> Visually similar assets are told apart only by catalogue information
+      (position, extent, height). Image-only reasoning cannot recover that correspondence. A projection with known camera parameters can, in about
+      0.02&nbsp;ms per frame, and it returns ∅ instead of a plausible box when the asset is not in view.</div>
+  </div>
+</section>
+
+<!-- ============================================================ DELEGATION -->
+<section id="delegation" class="soft">
+  <div class="wrap">
+    <div class="eyebrow">Method · the delegation process</div>
+    <h2>Success-guided agent design</h2>
+    <p class="lead">Start with the LLM doing everything. Measure each step. Build a tool for the weakest one, and keep it only if it lowers the
+      measured design loss by more than a margin. Repeat, then freeze the allocation for deployment. Step through the loop below, or press play.</p>
+
+    <div class="stepper">
+      <div class="flow">
+        <svg viewBox="0 0 820 480" role="img" aria-labelledby="flowtitle">
+          <title id="flowtitle">Success-guided agent design: task specification, planner, sub-task plan, success evaluator, tool maker, candidate validation, acceptance gate, accept tool or retain LLM, current design, and fixed agent design, with a feedback loop to the next sub-task.</title>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7a8599"/></marker>
+            <marker id="ahp" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7451a6"/></marker>
+          </defs>
+          <!-- edges -->
+          <path class="e" d="M230 48 H292" marker-end="url(#ah)"/><text class="el" x="245" y="40">ρ, 𝓑</text>
+          <path class="e" d="M500 48 H562" marker-end="url(#ah)"/><text class="el" x="515" y="40">π, Σ</text>
+          <path class="e" d="M665 76 V128" marker-end="url(#ah)"/><text class="el" x="672" y="106">all-LLM baseline</text>
+          <path class="e" d="M562 158 H500" marker-end="url(#ah)"/><text class="el" x="520" y="150">k*</text>
+          <path class="e" d="M292 158 H230" marker-end="url(#ah)"/><text class="el" x="252" y="150">τₖ</text>
+          <path class="e" d="M125 186 V218" marker-end="url(#ah)"/><text class="el" x="132" y="206">Δₖ</text>
+          <path class="e" d="M90 268 L62 300" marker-end="url(#ah)" style="stroke:#3a8f5b"/><text class="el" x="50" y="285" style="fill:#3a8f5b">yes</text>
+          <path class="e" d="M160 268 L188 300" marker-end="url(#ah)" style="stroke:#b55252"/><text class="el" x="182" y="285" style="fill:#b55252">no</text>
+          <path class="e" d="M62 352 V384" marker-end="url(#ah)"/>
+          <path class="e" d="M188 352 V384" marker-end="url(#ah)"/>
+          <path class="e" d="M230 412 H562" marker-end="url(#ah)"/><text class="el" x="380" y="404">freeze</text>
+          <path class="e" d="M665 186 V384" marker-end="url(#ah)"/><text class="el" x="672" y="290">stop</text>
+          <path class="e fb" d="M125 440 V462 H790 V158 H770" marker-end="url(#ahp)"/><text class="el" x="400" y="456" style="fill:#7451a6">next sub-task</text>
+          <!-- nodes -->
+          <g class="n" data-i="0"><rect class="c-in" x="20" y="20" width="210" height="56" rx="9"/><text x="125" y="44" text-anchor="middle">TASK SPECIFICATION</text><text class="s" x="125" y="62" text-anchor="middle">instructions ρ, calibration set 𝓑</text></g>
+          <g class="n" data-i="1"><rect class="c-plan" x="292" y="20" width="208" height="56" rx="9"/><text x="396" y="44" text-anchor="middle">PLANNER</text><text class="s" x="396" y="62" text-anchor="middle">LLM | human-in-the-loop</text></g>
+          <g class="n" data-i="2"><rect class="c-plan" x="562" y="20" width="208" height="56" rx="9"/><text x="666" y="44" text-anchor="middle">SUB-TASK PLAN</text><text class="s" x="666" y="62" text-anchor="middle">contracts Σ; start with aₖ = fₖ</text></g>
+          <g class="n" data-i="3"><rect class="c-eval" x="562" y="130" width="208" height="56" rx="9"/><text x="666" y="154" text-anchor="middle">SUCCESS EVALUATOR</text><text class="s" x="666" y="172" text-anchor="middle">estimate e, t, c, φ per step</text></g>
+          <g class="n" data-i="4"><rect class="c-make" x="292" y="130" width="208" height="56" rx="9"/><text x="396" y="154" text-anchor="middle">TOOL MAKER</text><text class="s" x="396" y="172" text-anchor="middle">LLM | human-in-the-loop</text></g>
+          <g class="n" data-i="5"><rect class="c-val" x="20" y="130" width="210" height="56" rx="9"/><text x="125" y="154" text-anchor="middle">CANDIDATE VALIDATION</text><text class="s" x="125" y="172" text-anchor="middle">contract tests, resource profiling</text></g>
+          <g class="n" data-i="6"><polygon class="c-gate" points="125,220 200,244 125,268 50,244"/><text x="125" y="248" text-anchor="middle">Δₖ &gt; δₖ ?</text></g>
+          <g class="n" data-i="7"><rect class="c-ok" x="10" y="302" width="104" height="50" rx="9"/><text x="62" y="323" text-anchor="middle">ACCEPT TOOL</text><text class="s" x="62" y="340" text-anchor="middle">aₖ ← τₖ</text>
+            <rect class="c-no" x="136" y="302" width="104" height="50" rx="9"/><text x="188" y="323" text-anchor="middle">RETAIN LLM</text><text class="s" x="188" y="340" text-anchor="middle">aₖ ← fₖ</text></g>
+          <g class="n" data-i="8"><rect class="c-out" x="20" y="386" width="210" height="54" rx="9"/><text x="125" y="409" text-anchor="middle">CURRENT DESIGN</text><text class="s" x="125" y="426" text-anchor="middle">ĥₐ = a_K ∘ ⋯ ∘ a₁</text></g>
+          <g class="n" data-i="9"><rect class="c-out" x="562" y="386" width="208" height="54" rx="9"/><text x="666" y="409" text-anchor="middle">FIXED AGENT DESIGN</text><text class="s" x="666" y="426" text-anchor="middle">freeze allocation for deployment</text></g>
+        </svg>
+      </div>
+      <div>
+        <div class="step-panel" aria-live="polite">
+          <span class="k" id="st-k">STEP 1 / 10</span>
+          <h3 id="st-h">Task specification</h3>
+          <p id="st-p"></p>
+          <div class="ex" id="st-ex"></div>
+        </div>
+        <div class="ctrl">
+          <button id="st-prev" aria-label="Previous step">← Prev</button>
+          <button id="st-play">▶ Play</button>
+          <button id="st-next" aria-label="Next step">Next →</button>
+          <div class="dots" id="st-dots"></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:44px 0 6px">The same loop on a real request (Case B)</h3>
+    <p class="muted" style="max-width:820px">Measured design losses from the paper (Table 4). The evaluator visits the weakest step first: visibility,
+      then retrieval, then selection, then parsing. Three tools are accepted; the parser tool is rejected because it is brittle to paraphrases.</p>
+    <figure class="paper"><img src="static/videos/delegation_loop.gif" alt="Animation: the request is decomposed into four sub-tasks, all start with the LLM, and the evaluator replaces visibility, retrieval and selection with tools while parsing stays with the LLM" loading="lazy"></figure>
+  </div>
+</section>
+
+<!-- ============================================================ FORMULATION -->
+<section id="formulation">
+  <div class="wrap">
+    <div class="eyebrow">Formulation</div>
+    <h2>One measure to compare inference and computation</h2>
+    <div class="split">
+      <div>
+        <p>A task <span class="m">h:\mathcal X\to\mathcal Y</span> is decomposed sequentially. Each sub-task can be run by LLM inference
+          <span class="m">f_k</span> or by a tool <span class="m">\tau_k</span>; an allocation picks one per step:</p>
+        <div class="math" data-m="h = h_K\circ\cdots\circ h_1,\qquad \widehat h_a := a_K\circ\cdots\circ a_1,\quad a_k\in\{f_k,\tau_k\}."></div>
+        <p>Each mechanism is described by error <span class="m">e_k</span>, latency <span class="m">t_k</span>, cost <span class="m">c_k</span> and
+          flexibility <span class="m">\phi_k</span>, the fraction of request variants it serves without being rewritten. A union bound turns the
+          per-step numbers into a certificate on the whole agent, <b>with no independence assumption</b>:</p>
+        <div class="math" data-m="\Pr\big(\widehat h_a(x)\neq h(x)\big)\le \sum_{k} e_k(a_k),\qquad \Phi(a)\ge 1-\sum_k\big(1-\phi_k(a_k)\big)."></div>
+        <p>Weighting the four terms gives a local design loss per step, and the allocation that maximizes the certified success score
+          decomposes into independent per-step choices:</p>
+        <div class="math" data-m="\widehat d_k(m)= w_A\,\widehat e_k(m)+w_T\frac{\widehat t_k(m)}{T_0}+w_C\frac{\widehat c_k(m)}{C_0}+w_F\big(1-\widehat\phi_k(m)\big)"></div>
+      </div>
+      <div>
+        <div class="callout" style="margin-top:0"><b>Delegation rule.</b> Replace <span class="m">f_k</span> with a candidate tool only if
+          <span class="m">\widehat\Delta_k=\widehat d_k(f_k)-\widehat d_k(\tau_k)>\delta_k</span>. Choosing
+          <span class="m">\delta_k\ge2\eta_k</span>, where <span class="m">\eta_k</span> bounds the estimation error, guarantees that every accepted
+          tool truly improves its step.</div>
+        <ol class="steps">
+          <li><b>Plan.</b> Decompose the request into sub-tasks with input/output contracts <span class="m">\sigma_k</span>.</li>
+          <li><b>Baseline.</b> Run the all-LLM design on a calibration set and measure every step.</li>
+          <li><b>Make tools.</b> For the weakest steps, an LLM or a human writes a candidate tool from the contract and the observed failures.</li>
+          <li><b>Validate.</b> The candidate must pass contract tests and declare what it cannot handle.</li>
+          <li><b>Gate and freeze.</b> Keep it only if the gain clears the margin; freeze the composition and serve it without re-planning.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ TRY IT -->
+<section id="try" class="soft">
+  <div class="wrap">
+    <div class="eyebrow">Interactive · try the delegation rule</div>
+    <h2>Change the priorities, watch the allocation move</h2>
+    <p class="lead">Mechanism attributes are the measured Case B values (Table 4). Move the weights to see which sub-tasks stay with the LLM.
+      For example, raise <span class="m">w_F</span> above about 1.41 and selection returns to the LLM.</p>
+    <div class="calc">
+      <div class="sliders">
+        <label>w<sub>A</sub> · accuracy <b id="v-wA"></b></label><input type="range" id="wA" min="0" max="3" step="0.05" value="1">
+        <label>w<sub>T</sub> · latency <b id="v-wT"></b></label><input type="range" id="wT" min="0" max="2" step="0.05" value="0.3">
+        <label>w<sub>C</sub> · cost <b id="v-wC"></b></label><input type="range" id="wC" min="0" max="2" step="0.05" value="0.2">
+        <label>w<sub>F</sub> · flexibility <b id="v-wF"></b></label><input type="range" id="wF" min="0" max="3" step="0.05" value="0.2">
+        <label>δ · acceptance margin <b id="v-dl"></b></label><input type="range" id="dl" min="0" max="1" step="0.01" value="0">
+        <div class="presets">
+          <button data-p="1,0.3,0.2,0.2,0">Paper setting</button>
+          <button data-p="1,0,0,0,0">Accuracy only</button>
+          <button data-p="1,0.3,0.2,1.6,0">Flexibility-heavy</button>
+          <button data-p="0.2,1.5,1,0.2,0">Speed &amp; cost</button>
+        </div>
+      </div>
+      <div>
+        <div class="result-strip" id="calc-strip"></div>
+        <div class="tbl-wrap">
+          <table id="calc-table">
+            <thead><tr><th>Sub-task</th><th>d(f<sub>k</sub>) LLM</th><th>d(τ<sub>k</sub>) tool</th><th>Δ<sub>k</sub></th><th>Decision</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="summary" id="calc-summary"></p>
+        <details class="data"><summary>Show measured attributes (Table 4)</summary>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th></th><th>f₁</th><th>τ₁</th><th>f₂</th><th>τ₂</th><th>f₃</th><th>τ₃</th><th>f₄</th><th>τ₄</th></tr></thead>
+              <tbody>
+                <tr><td>error e</td><td>0.02</td><td>0.15</td><td>1.00</td><td>0.00</td><td>1.00</td><td>0.00</td><td>0.50</td><td>0.02</td></tr>
+                <tr><td>latency t (s)</td><td>0.35</td><td>0.001</td><td>2.40</td><td>0.89</td><td>20.86</td><td>0.006</td><td>1.20</td><td>0.0002</td></tr>
+                <tr><td>cost c (k tokens)</td><td>0.6</td><td>0</td><td>12.0</td><td>0</td><td>23.8</td><td>0</td><td>0.35</td><td>0</td></tr>
+                <tr><td>flexibility φ</td><td>0.95</td><td>0.30</td><td>0.90</td><td>0.60</td><td>1.00</td><td>0.50</td><td>1.00</td><td>0.40</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="muted" style="font-size:.85rem;margin-top:8px">T₀ = 1 s, C₀ = 10⁴ tokens. These are development estimates from one query; the frozen evaluation below tests whether the design generalizes.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ CASES -->
+<section id="cases">
+  <div class="wrap">
+    <div class="eyebrow">Case study · asset-aware retrieval</div>
+    <h2>Four cases, four lessons about delegation</h2>
+    <p class="lead">One surveyed industrial site: 109 catalogued assets and about 31k geo-located frames, each with position, yaw, gimbal pitch
+      and altitude. The chips under each case show the final allocation, step by step.</p>
+    <div class="grid g2">
+      <div class="card gifcard">
+        <div class="media"><img src="static/videos/caseA_grounding.gif" alt="Slideshow of the Case A grounding examples" loading="lazy"></div>
+        <div class="body"><span class="num">CASE A</span><h3>Where is the asset in this frame?</h3>
+          <p>The all-LLM baseline merges identity and localization into one call and fails confidently when the tag is unreadable.
+            Localization goes to a back-projection tool; the model keeps appearance checks such as occlusion and blur.</p>
+          <div class="alloc"><span class="n">h₁ resolve tag → catalogue entry</span><span class="t">h₂ localize · projection tool</span><span class="n">h₃ return region or ∅</span><span class="l">h₄ occlusion, blur · LLM</span></div></div>
+      </div>
+      <div class="card gifcard">
+        <div class="media"><img src="static/videos/caseB_retrieval.gif" alt="Animation of retrieval: bulk retrieve, field-of-view filter, farthest-point selection" loading="lazy"></div>
+        <div class="body"><span class="num">CASE B</span><h3>Which frames show it?</h3>
+          <p>Every all-LLM configuration returns 0% in-frame on the development query, even with high reasoning effort.
+            Farthest-point selection reaches 50% on the raw pool and 100% after the FOV filter: the same mechanism, in a different order.</p>
+          <div class="alloc"><span class="l">h₁ parse · LLM</span><span class="t">h₂ retrieve · tool</span><span class="t">h₃ visibility · tool</span><span class="t">h₄ select · tool</span></div></div>
+      </div>
+      <div class="card">
+        <div class="media"><img src="static/images/paper/cases_cd.png" alt="Case C precision per criterion, and Case D agreement for both specification arms" loading="lazy"></div>
+        <div class="body"><span class="num">CASE C</span><h3>Constraints that arrive with the request</h3>
+          <p>“Overhead”, “north side”, “thermal”, “close-up colour, not thermal”: a fixed selector has nowhere to put the criterion and serves 1 of 11.
+            The LLM serves 7. Asking the model <em>once, offline</em> to compile each criterion into a scoring function serves 9, at 0.025&nbsp;s and no serving tokens.
+            Compilation fails where the request is ambiguous, not where it is complex.</p>
+          <div class="alloc"><span class="l">h₁ parse · LLM</span><span class="t">h₂ · tool</span><span class="t">h₃ · tool</span><span class="s">h₄ · compiled by LLM, run as tool</span></div></div>
+      </div>
+      <div class="card gifcard">
+        <div class="media"><img src="static/videos/caseD_toolmaker.gif" alt="Animation of the tool-maker experiment: both arms pass their gate, but the core arm fails the five field tests" loading="lazy"></div>
+        <div class="body"><span class="num">CASE D</span><h3>The tool maker is an LLM</h3>
+          <p>Given a contract, three examples and a description of the test suite, the model writes the visibility tool and repairs it from failing assertions.
+            Both arms pass their own gate. Without the five field clauses, the tool cannot recover the corpus conventions: 0.625 vs 0.964 agreement on the frames they govern.</p>
+          <div class="alloc"><span class="s">MakeTool · LLM</span><span class="t">validated by tests + independent oracle</span></div></div>
+      </div>
+    </div>
+    <div class="callout"><b>Lesson.</b> Reliability comes from the specification and its independent validation, not from who writes the tool.</div>
+  </div>
+</section>
+
+<!-- ============================================================ GEOMETRY -->
+<section id="geometry" class="soft">
+  <div class="wrap">
+    <div class="eyebrow">Why compute · the visibility tool</div>
+    <h2>Visibility is a projection, not a judgement</h2>
+    <div class="split">
+      <div>
+        <p>The single-call prompt gives the model every quantity it needs, including the bearing from camera to asset, and describes the decision
+          procedure explicitly. It still fails, because the answer is a <em>composition</em> of those quantities. The tool computes it:</p>
+        <div class="math" data-m="q_{s_h,s_v}=d+s_h\tan\tfrac{\theta_h}{2}\,r+s_v\tan\tfrac{\theta_v}{2}\,u,\qquad s_h,s_v\in\{-1,1\}"></div>
+        <p>The four corner rays are intersected with the ground plane (range-clamped so shallow pitches stay bounded), and a ray-casting test checks whether
+          the asset lies inside the footprint. The answer has three values: <code>in</code>, <code>out</code>, or <code>pose unknown</code>.</p>
+        <div class="callout"><b>A worked case from the paper.</b> A camera 40&nbsp;m east, 60&nbsp;m high, facing the asset (yaw 270°) at pitch −35°: the bearing gap is 0°,
+          so the angular heuristic says <em>in</em>. The footprint spans E ∈ [−141, −7.4]&nbsp;m and stops short of the asset, so it is <em>out</em>.
+          Neither distance nor alignment alone predicts this.</div>
+        <p class="muted">Even handing the model the exact projection equations gives a precision of only 0.653. Letting it <em>write and run</em> the code repairs precision (0.982),
+          which suggests the model can build the procedure, but cannot reliably execute it inside its forward pass.</p>
+      </div>
+      <figure class="paper"><img src="static/videos/fov_geometry.gif" alt="Animation: camera pitch and yaw sweep; the footprint test and the angular heuristic disagree" loading="lazy">
+        <figcaption>The prompt heuristic (bearing gap below 25°) compared with the projection tool τ₃, as the camera's pitch and yaw change. Geometry follows Appendix C of the paper.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ RESULTS -->
+<section id="results">
+  <div class="wrap">
+    <div class="eyebrow">Results · frozen held-out evaluation</div>
+    <h2>Same precision as code generation, at a fraction of the cost</h2>
+    <p class="lead">24 assets disjoint from every development target, chosen by a rule fixed in advance. Labels come from an independent projection oracle
+      (full 3-D rotation, focal length and roll) and from pixel adjudication of 435 frames, 228 of them by a human. Every arm sees the same 120 frames per asset, κ = 10, 3 repeats.</p>
+
+    <div class="chart" id="bench-chart">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div><h3>Strict precision and coverage@κ</h3><div class="sub">95% bootstrap intervals over targets. Hover a point for its values.</div></div>
+        <div class="toggle" role="group" aria-label="Model"><button data-m="g37" class="on">Gemini 3.7</button><button data-m="g25">Gemini 2.5</button></div>
+      </div>
+      <div class="legend"><span><i style="background:var(--series-1)"></i>precision (strict)</span><span><i style="background:var(--series-2)"></i>coverage@κ</span></div>
+      <svg id="bench-svg" viewBox="0 0 900 330" role="img" aria-label="Dot plot of precision and coverage for six mechanisms"></svg>
+      <div class="tooltip" id="bench-tip"></div>
+    </div>
+
+    <div class="tbl-wrap" style="margin-top:20px">
+      <table id="bench-table">
+        <thead><tr><th>Mechanism at h₃, h₄</th><th>Precision (strict)</th><th>Coverage@κ</th><th>Latency</th><th>Tokens</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="figs2" style="margin-top:28px">
+      <figure class="paper"><img src="static/images/paper/frozen_bench.png" alt="Paper figure: held-out quality and cost for all arms" loading="lazy">
+        <figcaption>(a) Held-out quality on both models. (b) Latency against tokens; teal marks mechanisms with no model in the serving path.</figcaption></figure>
+      <figure class="paper"><img src="static/images/paper/frozen_alloc.png" alt="Paper figure: all 16 allocations ranked by held-out loss and allocation stability" loading="lazy">
+        <figcaption>(a) All 16 allocations by held-out loss; orange is the rule's pick from per-step attributes alone. (b) Stability over 80 weight settings.</figcaption></figure>
+    </div>
+
+    <div class="grid g3" style="margin-top:24px">
+      <div class="stat"><b>0.604 vs 0.594</b><span>cross-fitted loss of the rule's pick vs the best fixed allocation (gap 0.010, CI [−0.103, +0.141]); the worst is 2.523</span></div>
+      <div class="stat"><b>0.924</b><span>agreement between the deployed FOV tool and the independent oracle on 6,619 frames</span></div>
+      <div class="stat"><b>0.900 / 0.131</b><span>deployed tool's precision / recall against pixel labels: precise when it accepts, but it misses frames</span></div>
+    </div>
+    <details class="data" style="margin-top:14px"><summary>Show visibility precision, recall and F1 against pixel labels</summary>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Reference</th><th>Mechanism</th><th>Precision</th><th>Recall</th><th>F1</th></tr></thead>
+        <tbody>
+          <tr><td>Merged pixel labels</td><td style="text-align:left">Deployed FOV tool</td><td>0.900</td><td>0.131</td><td>0.229</td></tr>
+          <tr><td></td><td style="text-align:left">Independent oracle</td><td>0.833</td><td>0.687</td><td>0.753</td></tr>
+          <tr><td>Human-only subset</td><td style="text-align:left">Deployed FOV tool</td><td>1.000</td><td>0.110</td><td>0.198</td></tr>
+          <tr><td></td><td style="text-align:left">Independent oracle</td><td>0.837</td><td>0.932</td><td>0.882</td></tr>
+        </tbody>
+      </table></div>
+    </details>
+    <div class="callout"><b>An honest correction.</b> Independent labels revised our own estimate of the visibility tool: it is precise when it accepts a frame, but rejects
+      many frames where the asset is visible. Development numbers measured the tool against its own model of visibility. Using independent ground truth to set the
+      boundary between inference and computation is part of the method.</div>
+  </div>
+</section>
+
+<!-- ============================================================ THEORY -->
+<section id="theory" class="soft">
+  <div class="wrap">
+    <div class="eyebrow">Theory</div>
+    <h2>Guarantees that hold under estimation error</h2>
+    <div class="grid g2">
+      <div class="card"><div class="body">
+        <span class="num">PROPOSITION 1 · REGRET</span><h3>Estimated attributes, bounded regret</h3>
+        <p>If every estimated local loss is within <span class="m">\eta_k</span> of its true value, the per-step argmin is near-optimal for the whole design:</p>
+        <div class="math" data-m="\underline S(a^\star)-\underline S(\widehat a)\le 2\sum_{k=1}^{K}\eta_k"></div>
+        <p>and a margin <span class="m">\delta_k\ge2\eta_k</span> ensures every accepted tool strictly lowers the true local loss. The proof is a three-line telescoping argument.</p>
+      </div></div>
+      <div class="card"><div class="body">
+        <span class="num">LEMMA 1 · FINITE SAMPLES</span><h3>How much calibration data?</h3>
+        <p>With <span class="m">n_k(m)</span> Bernoulli observations per mechanism, simultaneously for all steps and mechanisms with probability <span class="m">1-\delta</span>:</p>
+        <div class="math" data-m="|e_k(m)-\widehat e_k(m)|\le\sqrt{\tfrac{\log(2M/\delta_k)}{2n_k(m)}},\quad \delta_k=\delta/K"></div>
+        <p>With 24 targets the slack is 0.347 for most steps; only visibility, estimated from 6,619 frame-level judgements, reaches 0.021. About 1,150 independent units would bring every step to 0.05.</p>
+      </div></div>
+    </div>
+    <p class="muted" style="margin-top:18px">Sensitivity: if deployment shifts each attribute by at most ε, a measured LLM–tool gap larger than <span class="m">2\epsilon_{d,k}</span> keeps its sign.
+      Under the paper's operating point, parsing (0.143) and selection (0.727) are the most sensitive decisions; retrieval (1.633) and visibility (7.632) are robust.</p>
+  </div>
+</section>
+
+<!-- ============================================================ CITATION -->
+<section id="citation">
+  <div class="wrap">
+    <div class="eyebrow">Citation</div>
+    <h2>BibTeX</h2>
+    <div class="bib">
+      <button class="copy" data-copy="bib1">Copy BibTeX</button>
+<pre id="bib1">@inproceedings{vendrell2026geometry,
+  title     = {Geometry Is Not a Prompt: What Physical-World Agents Should Compute Instead of Infer},
+  author    = {Vendrell Gallart, Joan and Vaezpour, Elaheh and Moradi, Behnam and Javidi, Tara},
+  booktitle = {NeurIPS 2026 Workshop on Physical World AI (PhysWorldAI)},
+  address   = {Atlanta, GA},
+  year      = {2026}
+}</pre>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Geometry Is Not a Prompt · 2026 · KavAI, UC Irvine, UC San Diego<br>
+    Photos: “A drone DJI Mavic 2 Pro flying” by Iswoar (<a href="https://creativecommons.org/licenses/by-sa/4.0">CC BY-SA 4.0</a>);
+    “Industrial piping” by Bitjungle (<a href="https://creativecommons.org/licenses/by-sa/3.0">CC BY-SA 3.0</a>), via Wikimedia Commons. Site images of AB230 are from the paper.<br>
+    Page layout shared with the <a href="https://joanvendrell.github.io/FORWARD/">FORWARD</a> project page.
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="static/js/main.js"></script>
+</body>
+</html>
